@@ -1,0 +1,16 @@
+{
+  "name": "architecture-review",
+  "displayName": "Architecture Review",
+  "version": "1.0.0",
+  "description": "Review a change or design for architecture violations.",
+  "author": {
+    "name": "yudbox"
+  },
+  "keywords": [
+    "architecture",
+    "review"
+  ],
+  "dependencies": [
+    "engineering-paved-path"
+  ]
+}

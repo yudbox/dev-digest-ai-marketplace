@@ -1,0 +1,13 @@
+{
+  "name": "research-tools",
+  "displayName": "Research Tools",
+  "version": "1.0.0",
+  "description": "Research a topic, library or codebase area and return a cited summary.",
+  "author": {
+    "name": "yudbox"
+  },
+  "keywords": [
+    "research",
+    "docs"
+  ]
+}

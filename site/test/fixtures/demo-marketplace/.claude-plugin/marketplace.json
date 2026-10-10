@@ -1,0 +1,29 @@
+{
+  "name": "dev-digest-ai-marketplace",
+  "owner": {
+    "name": "yudbox"
+  },
+  "description": "DEMO DATA for local development of the catalog site \u2014 not the real catalog.",
+  "plugins": [
+    {
+      "name": "sdd-engineering",
+      "source": "./plugins/sdd-engineering",
+      "description": "Spec-Driven Development: from a feature request to a verified implementation."
+    },
+    {
+      "name": "research-tools",
+      "source": "./plugins/research-tools",
+      "description": "Research a topic, library or codebase area and return a cited summary."
+    },
+    {
+      "name": "architecture-review",
+      "source": "./plugins/architecture-review",
+      "description": "Review a change or design for architecture violations."
+    },
+    {
+      "name": "engineering-paved-path",
+      "source": "./plugins/engineering-paved-path",
+      "description": "Shared engineering conventions reused by other plugins."
+    }
+  ]
+}
