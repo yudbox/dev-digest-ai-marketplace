@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "dev-digest-ai-marketplace",
+  "owner": {
+    "name": "yudbox",
+    "email": "a.yudbox@gmail.com"
+  },
+  "description": "Marketplace of Claude Code plugins for the Dev Digest AI project.",
+  "version": "0.1.0",
+  "plugins": []
+}

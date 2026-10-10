@@ -1,0 +1,5 @@
+# Catch-all — single maintainer for now.
+* @yudbox
+
+# When a plugin from another author is added, add a line scoped to it, e.g.:
+# plugins/<plugin-name>/ @some-other-author

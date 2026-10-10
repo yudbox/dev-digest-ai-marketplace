@@ -1,0 +1,41 @@
+name: Validate Marketplace
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history — gitleaks needs it to scan past commits too
+
+      - name: Layer 2 — custom structural checks (no auth/network required)
+        run: node scripts/validate-marketplace.mjs
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Layer 1 — official marketplace validation
+        # No --strict here: with an empty `plugins: []` (our starting state),
+        # the validator's only finding is the warning "Marketplace has no
+        # plugins defined", which --strict would turn into a hard failure.
+        # The plugin template below is still checked with --strict.
+        run: claude plugin validate .
+
+      - name: Layer 1b — validate example plugin template
+        run: claude plugin validate templates/example-plugin --strict
+
+      - name: Secret scan (gitleaks)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

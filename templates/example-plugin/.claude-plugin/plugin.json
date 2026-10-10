@@ -1,0 +1,10 @@
+{
+  "name": "example-plugin",
+  "displayName": "Example Plugin",
+  "version": "0.1.0",
+  "description": "Template skeleton — copy this folder to plugins/<name> and edit before registering in marketplace.json.",
+  "author": {
+    "name": "yudbox"
+  },
+  "license": "MIT"
+}
