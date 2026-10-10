@@ -200,6 +200,21 @@ Run both modes sequentially. Output:
 
 ---
 
+### Footer
+
+End every report — after Layer 3, or after the Web Research section in
+mixed mode — with this line exactly, as the last line:
+
+```
+_research-tools v1.1.0_
+```
+
+It shows which plugin version produced the report. Update the number in
+this line together with `version` in `.claude-plugin/plugin.json` on every
+release.
+
+---
+
 ## Honesty Rule
 
 If after thorough search nothing is found → say so clearly in the table (`❌ Nothing found`). State what was searched and why it came up empty. **Never fabricate results, invent file paths, or guess at content you haven't read.**
