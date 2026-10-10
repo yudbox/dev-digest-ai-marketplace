@@ -70,11 +70,16 @@ replace them.
 If a published release turns out to be malicious, compromised, or
 leaking data (revocation — different from an ordinary rollback):
 
-1. **Stop new installs.** Open a PR that marks the plugin deprecated in
-   `marketplace.json` (or removes the entry) and points the `stable`
-   channel at the last-known-good SHA (`docs/RELEASES.md`). Removing a
-   catalog entry blocks *new* installs only — it does **not** clean up
-   copies already installed.
+1. **Stop new installs and pull installed copies.** Open a PR that either
+   points the `stable` channel at the last-known-good SHA
+   (`docs/RELEASES.md`), or — if no good release exists — removes the
+   entry from `plugins`, adds `"<name>": null` to `renames`, and sets
+   `"forceRemoveDeletedPlugins": true` (`docs/RELEASES.md` → "Removing a
+   plugin from the catalog"). Only `forceRemoveDeletedPlugins` uninstalls
+   copies already on users' machines, and only after their marketplace
+   refreshes; plugins force-enabled by managed settings stay until an
+   admin changes those settings. Treat it as a mitigation, not a
+   guarantee — steps 2–4 still apply.
 2. **Notify users** through the plugin's support channel with the exact
    rollback commands (`docs/RELEASES.md` → Rollback) and the affected
    version range.
@@ -94,28 +99,41 @@ leaking data (revocation — different from an ordinary rollback):
 
 ## What CI actually checks (and what it doesn't)
 
-Two layers run on every PR and push to `main` (see
-`.github/workflows/validate.yml`):
+Four steps run on every PR and push to `main` (see
+`.github/workflows/validate.yml`), with the workflow token limited to
+`contents: read` / `pull-requests: read`:
 
 1. **`scripts/validate-marketplace.mjs`** (custom, zero dependencies) —
-   hard-fails on non-kebab-case names, reserved-name collisions, duplicate
-   plugin names, missing referenced paths, hardcoded absolute paths in
-   manifest/hook/MCP files, and a small regex-based secret scan (AWS keys,
-   GitHub/Slack tokens, PEM private-key blocks, generic `api_key=...`).
-   A plugin's `source` escaping its own directory via `../` is separately
-   rejected by the official validator below (path traversal).
-2. **`claude plugin validate .`** — the official schema/structure validator.
-   Run *without* `--strict` at the marketplace root: with our starting
-   `plugins: []`, the only finding is a warning ("Marketplace has no plugins
-   defined"), and `--strict` would turn that into a hard CI failure for a
-   perfectly valid empty state. `templates/example-plugin` is still
-   validated with `--strict` (`claude plugin validate templates/example-plugin
-   --strict`), and once real plugins are added under `plugins/`, validating
-   them with `--strict` too is recommended. Either way, this validator does
-   not scan for secrets and does not generically flag hardcoded absolute
-   paths inside hook/MCP *command strings* — that's what layers 1 and 3
-   cover.
-3. **`gitleaks`** — scans the full git history (not just the working tree),
+   hard-fails on non-kebab-case names, reserved marketplace names and
+   plugin names that pass as Anthropic's own, duplicate plugin names,
+   `version` set in a catalog entry (it lives in `plugin.json` only),
+   missing `version`/`description`/`author`, missing required plugin files
+   (`README.md`, `CHANGELOG.md`, `COMPATIBILITY.md`, `evals/`), relative
+   sources without `./` or with `..`, broken `renames` chains, plugin
+   folders with no `CODEOWNERS` owner, missing referenced paths, hardcoded
+   absolute paths in manifest/hook/MCP files, and a small regex-based
+   secret scan (AWS keys, GitHub/Slack tokens, PEM private-key blocks,
+   generic `api_key=...`). It warns on a plugin-root `CLAUDE.md` (never
+   loaded) and a top-level `bin/` (rejected by claude.ai org sync). On a
+   PR it also runs with `--base origin/<base branch>` and fails when a
+   published plugin's files changed but its `version` was not raised —
+   otherwise users would never receive the change. The template is held to
+   the same per-plugin rules.
+2. **`claude plugin validate`** — the official schema/structure validator,
+   pinned to the CLI version in `CLAUDE_CODE_VERSION`. Run *without*
+   `--strict` at the marketplace root while `plugins: []` is empty (the
+   only finding is the warning "Marketplace has no plugins defined", which
+   `--strict` would turn into a failure — add `--strict` with the first
+   plugin). The template and every `plugins/*/` are validated with
+   `--strict`. This validator does not scan for secrets and does not
+   generically flag hardcoded absolute paths inside hook/MCP *command
+   strings* — that's what steps 1 and 4 cover.
+3. **`scripts/smoke-install.mjs`** — copies the marketplace to a temp dir
+   and runs `marketplace add` → `install` → `list` under an isolated
+   `CLAUDE_CONFIG_DIR`. It catches failures that only appear at install
+   time, such as a `source` pointing at a missing directory. While the
+   catalog is empty it installs the template as a throwaway plugin.
+4. **`gitleaks`** — scans the full git history (not just the working tree),
    so it catches a secret even if it was committed and then "removed" in a
    later commit. This is the authoritative secret-scanning gate; the regex
    check in step 1 is defense-in-depth in case the gitleaks step is ever

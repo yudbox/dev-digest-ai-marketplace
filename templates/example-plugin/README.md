@@ -11,18 +11,23 @@ a working, `claude plugin validate --strict`-clean starting point to copy
 1. Copy this whole folder to `plugins/<your-plugin-name>/`.
 2. Edit `.claude-plugin/plugin.json`: set `name` to your plugin's kebab-case
    name (must match the folder name), update `description`, `author`, etc.
-3. Replace the placeholder files under `commands/`, `agents/`, `skills/`,
-   `hooks/` with your real components, or delete the ones you don't need.
+3. Replace the placeholder files under `agents/`, `skills/`, `hooks/` with
+   your real components, or delete the ones you don't need. (No
+   `commands/` on purpose — new plugins ship user-invocable workflows as
+   skills; see `docs/PLUGIN-GUIDELINES.md`.)
    Fill in `COMPATIBILITY.md`, `CHANGELOG.md` and the cases in `evals/`.
    Rewrite this README with the sections required by
    `docs/PLUGIN-GUIDELINES.md` (use case, components, requirements,
    installation, quick start, verification, support).
 4. Add an entry for your plugin to the root `.claude-plugin/marketplace.json`
-   `plugins` array, with `"source": "./plugins/<your-plugin-name>"`.
-5. Bump the marketplace `version`.
-6. Run `claude plugin validate .`, `claude plugin validate
-   plugins/<your-plugin-name> --strict`, and
-   `node scripts/validate-marketplace.mjs` locally before opening a PR.
+   `plugins` array: `{ "name": "<your-plugin-name>", "source":
+   "./plugins/<your-plugin-name>", "description": "..." }`. Do **not** add
+   `version` to the entry — it lives in `plugin.json` only.
+5. Add a `CODEOWNERS` line for `plugins/<your-plugin-name>/` if you are
+   not covered by the catch-all.
+6. Run `node scripts/validate-marketplace.mjs`, `claude plugin validate .`,
+   `claude plugin validate plugins/<your-plugin-name> --strict` and
+   `node scripts/smoke-install.mjs` locally before opening a PR.
 
 See `docs/PLUGIN-GUIDELINES.md` for the full reference.
 

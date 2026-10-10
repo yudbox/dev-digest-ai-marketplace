@@ -72,18 +72,15 @@ function main() {
   writeJson(manifestPath, manifest);
   console.log(`✔ ${manifestPath}: ${currentVersion} -> ${newVersion}`);
 
-  const rootChangelog = path.join(ROOT, "CHANGELOG.md");
-  if (releaseChangelog(rootChangelog, newVersion)) {
-    console.log(`✔ Moved [Unreleased] -> [${newVersion}] in ${rootChangelog}`);
+  // A plugin release only cuts that plugin's own CHANGELOG. The root
+  // CHANGELOG belongs to the marketplace: its [Unreleased] section collects
+  // entries from every plugin and is cut only by a --marketplace release,
+  // so one plugin's version number never swallows other plugins' entries.
+  const changelog = args.plugin ? pluginChangelogPath(ROOT, args.plugin) : path.join(ROOT, "CHANGELOG.md");
+  if (releaseChangelog(changelog, newVersion)) {
+    console.log(`✔ Moved [Unreleased] -> [${newVersion}] in ${changelog}`);
   } else {
-    console.log(`… No [Unreleased] content found in ${rootChangelog} (left as-is)`);
-  }
-
-  if (args.plugin) {
-    const pluginChangelog = pluginChangelogPath(ROOT, args.plugin);
-    if (releaseChangelog(pluginChangelog, newVersion)) {
-      console.log(`✔ Moved [Unreleased] -> [${newVersion}] in ${pluginChangelog}`);
-    }
+    console.log(`⚠ No [Unreleased] content in ${changelog} — add release notes before committing`);
   }
 
   // Claude Code resolves plugin dependencies from tags named
