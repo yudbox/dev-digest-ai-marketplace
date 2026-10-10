@@ -1,7 +1,7 @@
 {
   "name": "research-tools",
   "displayName": "Research Tools",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Read-only researcher agent: searches the codebase and the web, returns a summary table, a Mermaid diagram and detailed notes — never edits files.",
   "author": {
     "name": "yudbox"

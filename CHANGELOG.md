@@ -7,6 +7,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Added
 
+- `research-tools` 1.1.0: researcher reports end with a version footer
+  (`_research-tools v1.1.0_`).
 - Initial marketplace skeleton: `.claude-plugin/marketplace.json` (empty
   `plugins: []`), `templates/example-plugin/` starter template, CI
   validation (`claude plugin validate` + custom structural checker +
