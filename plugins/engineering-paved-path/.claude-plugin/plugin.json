@@ -1,0 +1,25 @@
+{
+  "name": "engineering-paved-path",
+  "displayName": "Engineering Paved Path",
+  "version": "1.0.0",
+  "description": "Shared engineering skills for TypeScript web stacks — React, Next.js, Fastify, Drizzle, PostgreSQL, Zod, TypeScript, security, testing, Mermaid and Onion Architecture. One canonical copy, reused by other plugins via namespaced names.",
+  "author": {
+    "name": "yudbox"
+  },
+  "repository": "https://github.com/yudbox/dev-digest-ai-marketplace",
+  "license": "MIT",
+  "keywords": [
+    "skills",
+    "react",
+    "nextjs",
+    "fastify",
+    "drizzle",
+    "postgresql",
+    "zod",
+    "typescript",
+    "security",
+    "testing",
+    "architecture",
+    "mermaid"
+  ]
+}

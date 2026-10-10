@@ -7,5 +7,26 @@
   },
   "description": "Marketplace of Claude Code plugins for the Dev Digest AI project.",
   "version": "0.1.0",
-  "plugins": []
+  "plugins": [
+    {
+      "name": "engineering-paved-path",
+      "source": "./plugins/engineering-paved-path",
+      "description": "Shared engineering skills: React, Next.js, Fastify, Drizzle, PostgreSQL, Zod, TypeScript, security, testing, Mermaid, Onion Architecture."
+    },
+    {
+      "name": "research-tools",
+      "source": "./plugins/research-tools",
+      "description": "Read-only researcher agent for codebase and web research."
+    },
+    {
+      "name": "architecture-review",
+      "source": "./plugins/architecture-review",
+      "description": "Read-only architecture reviewer: Onion layering, DI, SOLID; PASS/FAIL verdict."
+    },
+    {
+      "name": "sdd-engineering",
+      "source": "./plugins/sdd-engineering",
+      "description": "Spec-Driven Development workflow: spec → plan → implement → architecture review → AC verification."
+    }
+  ]
 }

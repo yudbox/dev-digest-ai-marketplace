@@ -17,8 +17,21 @@ claude plugin marketplace add yudbox/dev-digest-ai-marketplace
 
 ## Plugins
 
-No plugins published yet. See `CONTRIBUTING.md` for the step-by-step
-workflow to add one — a copy-paste starting point lives at
+| Plugin | Version | What it is | Depends on |
+|---|---|---|---|
+| [`sdd-engineering`](plugins/sdd-engineering/README.md) | 1.0.0 | Spec-Driven Development workflow: spec-creator → implementation-planner → `/run-plan` (implementer → architecture review → plan-verifier), `/workflow-retro`, engineering-insights | the three below |
+| [`engineering-paved-path`](plugins/engineering-paved-path/README.md) | 1.0.0 | 12 shared engineering skills (React, Next.js, Fastify, Drizzle, PostgreSQL, Zod, TypeScript, security, testing, Mermaid, Onion Architecture) | — |
+| [`research-tools`](plugins/research-tools/README.md) | 1.0.0 | Read-only `researcher` agent (codebase + web) | — |
+| [`architecture-review`](plugins/architecture-review/README.md) | 1.0.0 | Read-only `architecture-reviewer` agent (layering, DI, SOLID, PASS/FAIL) | `engineering-paved-path` |
+
+Install the whole SDD workflow with one command — dependencies come along:
+
+```
+/plugin install sdd-engineering@dev-digest-ai-marketplace
+```
+
+Dependency graph and runtime call graph: [`docs/DEPENDENCY-GRAPH.md`](docs/DEPENDENCY-GRAPH.md).
+To add a plugin, see `CONTRIBUTING.md` — a copy-paste starting point lives at
 `templates/example-plugin/`.
 
 ## Why a separate repository
@@ -31,7 +44,7 @@ fix must not require a product release.
 ## Repository layout
 
 - `.claude-plugin/marketplace.json` — the marketplace manifest.
-- `plugins/` — one folder per published plugin (currently empty).
+- `plugins/` — one folder per published plugin (see the table above).
 - `templates/example-plugin/` — starter template for new plugins (never
   itself registered as a plugin).
 - `CONTRIBUTING.md` — contributor workflow (branch → PR → review),
@@ -46,6 +59,7 @@ fix must not require a product release.
 - `docs/SITE-SPEC.md` — the GitHub Pages catalog: screens, index schema,
   search.
 - `docs/COST-BASELINE.md` — cost/quality baseline and cost experiments.
+- `docs/DEPENDENCY-GRAPH.md` — install-time and runtime graph of the plugins.
 - `scripts/validate-marketplace.mjs` — custom CI structural checker.
 - `scripts/release.mjs`, `scripts/rollback.mjs` — release/rollback helpers.
 

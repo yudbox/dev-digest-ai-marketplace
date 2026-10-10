@@ -1,0 +1,35 @@
+{
+  "name": "sdd-engineering",
+  "displayName": "SDD Engineering",
+  "version": "1.0.0",
+  "description": "Spec-Driven Development workflow: spec-creator → implementation-planner → run-plan (implementer → architecture review → plan-verifier), plus workflow-retro and engineering-insights. Installs its three dependency plugins automatically.",
+  "author": {
+    "name": "yudbox"
+  },
+  "repository": "https://github.com/yudbox/dev-digest-ai-marketplace",
+  "license": "MIT",
+  "keywords": [
+    "sdd",
+    "spec-driven-development",
+    "workflow",
+    "agents",
+    "specification",
+    "planning",
+    "implementation",
+    "verification"
+  ],
+  "dependencies": [
+    {
+      "name": "engineering-paved-path",
+      "version": "^1.0.0"
+    },
+    {
+      "name": "research-tools",
+      "version": "^1.0.0"
+    },
+    {
+      "name": "architecture-review",
+      "version": "^1.0.0"
+    }
+  ]
+}

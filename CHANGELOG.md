@@ -23,3 +23,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
   dependencies and namespaced references, `${CLAUDE_SKILL_DIR}`.
 - `docs/COST-BASELINE.md` template for the cost/quality baseline.
 - Generated catalog files and `site/dist/` are git-ignored.
+- Plugins `engineering-paved-path`, `research-tools`, `architecture-review`
+  and `sdd-engineering` at 1.0.0 (unreleased — no tags yet), registered in
+  `marketplace.json`; extracted from the Dev Digest harness and
+  generalized (no product-specific paths). Dependency graph:
+  `docs/DEPENDENCY-GRAPH.md`.

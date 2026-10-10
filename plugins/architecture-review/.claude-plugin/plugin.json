@@ -1,0 +1,25 @@
+{
+  "name": "architecture-review",
+  "displayName": "Architecture Review",
+  "version": "1.0.0",
+  "description": "Read-only architecture reviewer: Onion layering, dependency direction, DI discipline and SOLID checks for any repository, with structured VIOLATION findings and a PASS/FAIL verdict.",
+  "author": {
+    "name": "yudbox"
+  },
+  "repository": "https://github.com/yudbox/dev-digest-ai-marketplace",
+  "license": "MIT",
+  "keywords": [
+    "architecture",
+    "code-review",
+    "onion-architecture",
+    "solid",
+    "agent",
+    "read-only"
+  ],
+  "dependencies": [
+    {
+      "name": "engineering-paved-path",
+      "version": "^1.0.0"
+    }
+  ]
+}
