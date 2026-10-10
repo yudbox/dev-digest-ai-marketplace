@@ -23,9 +23,9 @@ means existing users' Claude Code installs will see the same version and
 will not pick up the update. If `version` is omitted entirely, every new
 commit counts as a new version automatically — convenient for an
 actively-developed internal plugin, but risky if you want stable, pinned
-releases. Don't set `version` in both `plugin.json` and the marketplace
-entry unless you keep them in sync — `plugin.json` silently wins with no
-warning if they diverge.
+releases. Never set `version` in both `plugin.json` and the marketplace
+entry — `plugin.json` silently wins at install time if they diverge (see
+"Monorepo caveat" below for this repo's rule).
 
 > SemVer communicates the *nature* of a change, not the exact bytes that
 > shipped. Two different commits can both legitimately be tagged `1.2.0`.
@@ -35,23 +35,31 @@ warning if they diverge.
 ### Monorepo caveat: local `source` paths and the SHA fallback
 
 This marketplace uses local relative-path sources
-(`"source": "./plugins/<name>"`), not a separate repo per plugin. The commit-SHA
-fallback in the resolution order above applies to the **marketplace repo's
-own commit history as a whole** for a local-path plugin, not to commits that
-specifically touched that plugin's folder. Practically: if a plugin omits an
-explicit `version`, *any* commit to this repo — even one that only touches a
-different plugin — can look like a new version to that plugin's users.
-**Always set an explicit `version` in every plugin's `plugin.json`** to
-avoid noisy, unrelated "updates."
+(`"source": "./plugins/<name>"`), not a separate repo per plugin. Without a
+`version`, Claude Code falls back to "the commit SHA of the installed
+directory" — a moving target in a shared monorepo, and an implicit one:
+users see an opaque SHA instead of a SemVer number, and nothing ties an
+"update" to an intentional release.
+**Always set an explicit `version` in every plugin's `plugin.json`** — and
+only there (see the next paragraph) — so an update reaches users exactly
+when the plugin owner bumps it.
+
+**`version` lives in `plugin.json` only.** Do not also set `version` on
+the plugin's entry in `marketplace.json`: when both are set, `plugin.json`
+wins without a warning at install time (only `claude plugin validate`
+reports the mismatch). `scripts/validate-marketplace.mjs` fails the build
+if an entry declares `version`.
 
 ## Release process (per plugin)
 
 1. Make the change to the plugin's components.
-2. Update the plugin's own `CHANGELOG.md` and add an entry to the root
-   marketplace `CHANGELOG.md`.
+2. Add the change under `[Unreleased]` in the plugin's own `CHANGELOG.md`,
+   and a one-line entry under `[Unreleased]` in the root marketplace
+   `CHANGELOG.md`.
 3. Bump `version` in the plugin's `plugin.json` per the table above
-   (`node scripts/release.mjs --plugin <name> --bump <level>` does steps
-   2–3 for you).
+   (`node scripts/release.mjs --plugin <name> --bump <level>` bumps it and
+   moves the plugin CHANGELOG's `[Unreleased]` into the new version
+   heading; the root CHANGELOG is cut only by a `--marketplace` release).
 4. Run the plugin's behavior evals (`plugins/<name>/evals/`) — old cases
    **and** any new ones — before publishing. A prompt has no stable
    semantics the way a function signature does: one changed sentence can
@@ -96,9 +104,14 @@ always a new version with a new tag.
 ### Dependency order
 
 If a plugin declares `dependencies` on another plugin, release the
-dependency first, then the consumer plugin — a consumer whose range
-(`^1.0.0`) has no matching tag yet is disabled on install with
-`dependency-unsatisfied` / `no-matching-tag`. For this marketplace:
+dependency first, then the consumer plugin. Our plugins use relative-path
+sources, so when no `{name}--v{version}` tag satisfies the consumer's
+range (`^1.0.0`), Claude Code does **not** fail the install — it installs
+the marketplace's current copy of the dependency and checks the range
+when the plugin loads. If that copy is outside the range, the consumer
+stays disabled and `claude plugin list` shows
+`Requires "<dep>@dev-digest-ai-marketplace" ^1.0.0, installed <x.y.z>`.
+For this marketplace:
 
 ```
 1. engineering-paved-path   (no deps)
@@ -206,8 +219,9 @@ why the `stable` channel above pins the **whole marketplace** to a ref.
 To *fix forward* for everyone on `latest` (rather than pinning one
 project), use `scripts/rollback.mjs` (see below): it restores that
 plugin's folder from an older git ref and publishes it as a new,
-forward-moving release (never a silent downgrade — see "Deprecate, don't
-delete" below for why).
+forward-moving release (never a silent downgrade: users only receive an
+update when the computed version changes — see "The version-bump gotcha"
+above).
 
 If you ever need true independent per-plugin SHA-pinning despite the
 monorepo layout, you can re-register that one plugin's entry as a
@@ -222,14 +236,16 @@ manual memory:
 
 - **`node scripts/release.mjs --plugin <name> --bump patch|minor|major`**
   (or `--marketplace` instead of `--plugin`, and/or `--version x.y.z`
-  instead of `--bump`) — bumps the target `version` field, moves
-  `CHANGELOG.md`'s `[Unreleased]` section into a new dated version
+  instead of `--bump`) — bumps the target `version` field, moves the
+  `[Unreleased]` section of the target's own CHANGELOG (the plugin's for
+  `--plugin`, the root one for `--marketplace`) into a new dated version
   heading, and prints the `claude plugin tag` command (tag
   `{name}--v{version}`) to run after merge. Refuses to
   run on a dirty working tree, so a release always corresponds to a clean,
   reviewable commit.
 - **`node scripts/rollback.mjs --plugin <name> --to <git-ref-or-sha> [--version x.y.z]`**
-  — restores `plugins/<name>/` from the given historical ref, bumps its
+  — restores `plugins/<name>/` exactly as it was at the given historical
+  ref (files added later are removed too), bumps its
   `version` forward (to keep users actually receiving the revert as an
   update, per the version-bump gotcha), and reminds you to add a
   `CHANGELOG.md` entry explaining the revert before committing.
@@ -237,12 +253,27 @@ manual memory:
 Both scripts only stage local changes — they never commit, tag, or push on
 their own; that's a deliberate final human step.
 
-## Deprecate, don't delete
+## Removing a plugin from the catalog
 
-If a plugin needs to be pulled, prefer marking its marketplace entry
-deprecated (e.g. via a note in the description) over silently deleting it.
-Silent removal breaks existing installs with a `plugin-not-found` error
-instead of a clear migration path.
+Claude Code has **no deprecation state** for a marketplace entry — a note
+in `description` is just text and changes nothing for installed users.
+Silently deleting the entry is also wrong: existing installs then report
+`Plugin "<name>" not found in marketplace`.
+
+To pull a plugin:
+
+1. Remove its entry from `plugins` in `.claude-plugin/marketplace.json`.
+2. Record the removal in the top-level `renames` map: `"<name>": null`.
+   Users who still have it enabled get `Removed from the
+   "dev-digest-ai-marketplace" marketplace` and the key is dropped from
+   their settings.
+3. Optionally set `"forceRemoveDeletedPlugins": true` at the top level —
+   then Claude Code also **uninstalls** removed plugins from users'
+   machines at the next session start (plugins installed only by managed
+   settings stay). Without it, the removed plugin's copy stays installed.
+
+Announce the removal in the root `CHANGELOG.md` first, so users have a
+migration window before step 1 lands.
 
 ## Name stability / renaming
 

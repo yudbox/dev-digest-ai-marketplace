@@ -51,11 +51,14 @@ function main() {
   const preRollback = readJson(manifestPath);
   const preRollbackVersion = preRollback.version ?? "unknown";
 
+  // `git restore` (no-overlay) also deletes files that were added after
+  // <ref>; `git checkout <ref> -- <dir>` would leave them behind and ship a
+  // mix of old and new files as the "rolled back" plugin.
   try {
-    execSync(`git checkout ${JSON.stringify(args.to)} -- ${JSON.stringify(pluginDirRel)}`, {
-      cwd: ROOT,
-      stdio: "pipe",
-    });
+    execSync(
+      `git restore --source=${JSON.stringify(args.to)} --staged --worktree -- ${JSON.stringify(pluginDirRel)}`,
+      { cwd: ROOT, stdio: "pipe" }
+    );
   } catch (err) {
     throw new Error(
       `Could not restore ${pluginDirRel} from "${args.to}" (${resolvedSha.slice(0, 12)}). ` +

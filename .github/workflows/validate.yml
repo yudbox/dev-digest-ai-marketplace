@@ -5,6 +5,17 @@ on:
   push:
     branches: [main]
 
+# Every check here is offline/static — read-only access is all it needs
+# (docs/SECURITY.md). pull-requests: read lets gitleaks list the PR's commits.
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  # Pinned so a new CLI release can't turn CI red with a new validator rule
+  # overnight. Bump deliberately, in its own PR.
+  CLAUDE_CODE_VERSION: "2.1.296"
+
 jobs:
   validate:
     runs-on: ubuntu-latest
@@ -12,30 +23,46 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # full history — gitleaks needs it to scan past commits too
-
-      - name: Layer 2 — custom structural checks (no auth/network required)
-        run: node scripts/validate-marketplace.mjs
+          # Full history: gitleaks scans past commits, and the version-bump
+          # check diffs the PR against its base branch.
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22"
 
+      - name: Layer 2 — custom structural checks (no auth/network required)
+        run: |
+          if [ -n "$BASE_REF" ]; then
+            node scripts/validate-marketplace.mjs --base "origin/$BASE_REF"
+          else
+            node scripts/validate-marketplace.mjs
+          fi
+        env:
+          BASE_REF: ${{ github.base_ref }} # set on pull_request only
+
       - name: Install Claude Code CLI
-        run: npm install -g @anthropic-ai/claude-code
+        run: npm install -g "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}"
 
-      - name: Layer 1 — official marketplace validation
-        # No --strict here: with an empty `plugins: []` (our starting state),
-        # the validator's only finding is the warning "Marketplace has no
-        # plugins defined", which --strict would turn into a hard failure.
-        # The plugin template below is still checked with --strict.
-        run: claude plugin validate .
+      - name: Layer 1 — official marketplace validation (--strict)
+        run: claude plugin validate . --strict
 
-      - name: Layer 1b — validate example plugin template
-        run: claude plugin validate templates/example-plugin --strict
+      - name: Layer 1b — validate template and every plugin (--strict)
+        run: |
+          claude plugin validate templates/example-plugin --strict
+          for dir in plugins/*/; do
+            [ -f "$dir.claude-plugin/plugin.json" ] || continue
+            claude plugin validate "$dir" --strict
+          done
+
+      - name: Layer 3 — smoke install (add → install → list, isolated config)
+        run: node scripts/smoke-install.mjs
 
       - name: Secret scan (gitleaks)
         uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Commenting on the PR would need pull-requests: write; the failed
+          # check is the signal.
+          GITLEAKS_ENABLE_COMMENTS: "false"

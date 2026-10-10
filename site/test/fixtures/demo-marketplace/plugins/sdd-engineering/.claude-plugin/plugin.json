@@ -1,0 +1,19 @@
+{
+  "name": "sdd-engineering",
+  "displayName": "SDD Engineering",
+  "version": "1.0.0",
+  "description": "Spec-Driven Development: from a feature request to a verified implementation.",
+  "author": {
+    "name": "yudbox"
+  },
+  "keywords": [
+    "sdd",
+    "spec",
+    "workflow"
+  ],
+  "dependencies": [
+    "research-tools",
+    "architecture-review",
+    "engineering-paved-path"
+  ]
+}

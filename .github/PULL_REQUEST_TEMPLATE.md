@@ -4,8 +4,8 @@
 
 See `CONTRIBUTING.md` for details on each item.
 
-- [ ] `node scripts/validate-marketplace.mjs` passes locally
-- [ ] `claude plugin validate .` passes locally (plus `claude plugin validate plugins/<name> --strict`)
+- [ ] `node scripts/validate-marketplace.mjs --base origin/main` passes locally
+- [ ] `claude plugin validate .` passes locally (plus `claude plugin validate plugins/<name> --strict` and `node scripts/smoke-install.mjs`)
 - [ ] Plugin name(s) are kebab-case and unique
 - [ ] No secrets/credentials; no absolute paths; nothing referenced outside the plugin directory
 - [ ] Dependencies declared with semver ranges; dependency components referenced by namespaced name

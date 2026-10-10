@@ -1,0 +1,14 @@
+{
+  "name": "engineering-paved-path",
+  "displayName": "Engineering Paved Path",
+  "version": "1.0.0",
+  "description": "Shared engineering conventions reused by other plugins.",
+  "author": {
+    "name": "yudbox"
+  },
+  "keywords": [
+    "conventions",
+    "zod",
+    "testing"
+  ]
+}

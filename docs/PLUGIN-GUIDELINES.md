@@ -28,8 +28,9 @@ plugins/<plugin-name>/
 │   └── plugin.json            # ONLY the manifest goes here
 ├── skills/<skill-name>/       # optional — SKILL.md + scripts/ references/ assets/
 ├── agents/                    # optional — one <agent-name>.md per agent
-├── commands/                  # optional
+├── commands/                  # optional, legacy — prefer skills/ for new plugins
 ├── hooks/hooks.json           # optional
+├── scripts/                   # optional — executables called by hooks/MCP
 ├── .mcp.json                  # optional — config only, never credentials
 ├── evals/                     # REQUIRED — behavior cases (see below)
 ├── README.md                  # REQUIRED
@@ -41,6 +42,19 @@ Only `plugin.json` goes inside `.claude-plugin/`. Component directories
 (`commands/`, `agents/`, `skills/`, `hooks/`, etc.) must live at the plugin's
 own root, not inside `.claude-plugin/` — otherwise Claude Code will not find
 them.
+
+Two files that look natural but don't work as expected
+(`scripts/validate-marketplace.mjs` flags both):
+
+- **`CLAUDE.md` at the plugin root is not loaded** into context. Put
+  instructions Claude must follow into a skill.
+- **A top-level `bin/` directory** is put on the Bash tool's `PATH`, but
+  claude.ai organization sync rejects a plugin that has one. Keep
+  executables in `scripts/` and call them as
+  `"${CLAUDE_PLUGIN_ROOT}/scripts/<name>"`.
+
+Also keep plugin files out of Git LFS — a marketplace clone never fetches
+LFS content, so users receive pointer files instead.
 
 ### Required files
 
@@ -57,6 +71,12 @@ The only required field (if the manifest is present at all) is `name`,
 which must be kebab-case (`^[a-z0-9]+(-[a-z0-9]+)*$`) and match the plugin's
 folder name. In this marketplace `version`, `description` and `author` are
 also mandatory.
+
+Names that pass as Anthropic's own are rejected by `claude plugin
+validate`: a `name` starting with `claude-`, `anthropic-`, `anthropics-` or
+`cc-plugin-`, or equal to `claude`, `anthropic`, `anthropics`,
+`claude-code`, `claude-mods`. `scripts/validate-marketplace.mjs` enforces
+the same rule so the failure shows up in the first CI step.
 
 Common optional fields: `displayName`, `homepage`, `repository`,
 `license`, `keywords`, `commands`, `agents`, `skills`, `hooks`,
@@ -112,7 +132,7 @@ Use the environment variables Claude Code provides instead:
 | Variable | Use for |
 |---|---|
 | `${CLAUDE_PLUGIN_ROOT}` | files at the plugin's root (hook scripts, MCP server binaries). Changes on every update — **never store state here**. |
-| `${CLAUDE_SKILL_DIR}` | scripts and references **inside a skill's own directory**, e.g. `python3 "${CLAUDE_SKILL_DIR}/scripts/analyze.py"`. Also changes on update. |
+| `${CLAUDE_SKILL_DIR}` | scripts and references **inside a skill's own directory**, e.g. `python3 "${CLAUDE_SKILL_DIR}/scripts/analyze.py"`. Substituted only in `SKILL.md` content and `allowed-tools` Bash rules — **not** in hooks or MCP config (use `${CLAUDE_PLUGIN_ROOT}` there). Also changes on update. |
 | `${CLAUDE_PLUGIN_DATA}` | persistent per-plugin data that must survive updates. |
 | `${CLAUDE_PROJECT_DIR}` | the user's project root. |
 

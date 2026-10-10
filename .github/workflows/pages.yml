@@ -1,0 +1,73 @@
+name: Catalog Site · Deploy
+
+# Rebuilds the catalog from git and publishes it to GitHub Pages on every
+# push to main, so a merged plugin appears on the site without a manual
+# re-index. Separate from "Validate Marketplace" (validate.yml), so a site
+# failure and a marketplace failure are visible as different checks.
+# One-time setup: Settings → Pages → Source: "GitHub Actions".
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Least privilege by default; only the deploy job gets Pages write access.
+permissions:
+  contents: read
+
+# One deploy at a time; a newer push waits instead of cancelling a deploy
+# that is already running.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Site · test + build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      # scripts/build-index.mjs (fails on schema errors, AC-4) + tsc +
+      # vite build → site/dist
+      - name: Build index and site
+        run: npm run build
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site/dist
+
+  deploy:
+    name: Site · deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

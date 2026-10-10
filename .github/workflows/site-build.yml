@@ -1,0 +1,81 @@
+name: Catalog Site · CI
+
+# The catalog site's own check, kept apart from "Validate Marketplace"
+# (validate.yml checks the marketplace harness: manifests, plugins, secrets).
+# It shows up on every pull request as two separate checks:
+#   "Catalog Site · CI / Site · test"   — unit + UI tests (Vitest)
+#   "Catalog Site · CI / Site · build"  — index build, typecheck, Vite build
+# No deploy, no secrets. A plugin that breaks the index (AC-4) fails "build".
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Site · test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+  build:
+    name: Site · build
+    needs: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      # scripts/build-index.mjs (schema check) + tsc + vite build → site/dist
+      - name: Build index and site
+        run: npm run build
+
+      - name: Summary
+        run: |
+          {
+            echo "### Catalog site build"
+            echo ""
+            echo "| File | Size |"
+            echo "|---|---|"
+            for f in dist/index.json dist/releases.json dist/assets/*; do
+              echo "| \`${f#dist/}\` | $(du -h "$f" | cut -f1) |"
+            done
+            echo ""
+            node -e 'const i=require("./dist/index.json");const s=i.stats;console.log(`Indexed **${i.items.length}** entries: ${s.plugin} plugins, ${s.skill} skills, ${s.agent} agents, ${s.command} commands, ${s.hook} hooks, ${s.mcp} MCP servers.`)'
+          } >> "$GITHUB_STEP_SUMMARY"

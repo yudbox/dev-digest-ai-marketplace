@@ -57,7 +57,8 @@ plugins/<name>/
 2. If this is a **new** plugin: copy `templates/example-plugin/` to
    `plugins/<name>/` and edit `.claude-plugin/plugin.json`, then add an
    entry to the root `.claude-plugin/marketplace.json` `plugins` array:
-   `{ "name": "<name>", "source": "./plugins/<name>" }`.
+   `{ "name": "<name>", "source": "./plugins/<name>", "description": "..." }`
+   — without `version`, which lives in `plugin.json` only.
    > Editing the catalog is **only** needed when adding/removing a plugin.
    > Bumping an existing plugin's own version happens in its `plugin.json`
    > and does not touch `marketplace.json` (see `docs/RELEASES.md`).
@@ -69,10 +70,13 @@ plugins/<name>/
    gotcha.
 6. Validate locally before opening a PR:
    ```
-   node scripts/validate-marketplace.mjs
+   node scripts/validate-marketplace.mjs --base origin/main
    claude plugin validate .
    claude plugin validate plugins/<name> --strict
+   node scripts/smoke-install.mjs
    ```
+   `--base` fails if you changed a published plugin without raising its
+   `version` — users would never receive the change.
 7. Smoke-test the plugin loaded straight from your working tree, together
    with its dependencies:
    ```
